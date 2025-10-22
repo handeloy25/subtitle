@@ -107,6 +107,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
   const assContent = assHeader + assEvents;
   fs.writeFileSync(assPath, assContent, 'utf-8');
+  console.log(`✅ ASS file created at: ${assPath}`);
+  console.log(`📄 ASS file size: ${fs.statSync(assPath).size} bytes`);
+  console.log(`📝 Total captions: ${captions.length}`);
 
   // Output path
   const outputPath = path.join(
@@ -116,6 +119,9 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
   // Normalize path for cross-platform compatibility
   const normalizedAssPath = assPath.replace(/\\/g, '/');
+  console.log(`🎬 Input video: ${videoPath}`);
+  console.log(`📋 Subtitle file: ${normalizedAssPath}`);
+  console.log(`💾 Output video: ${outputPath}`);
 
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
@@ -133,13 +139,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         console.log(`Processing: ${progress.percent}% done`);
       })
       .on('end', () => {
-        console.log('Video processing finished');
+        console.log('✅ Video processing finished successfully');
+        console.log(`📦 Output file size: ${fs.statSync(outputPath).size} bytes`);
         // Clean up ASS file
         fs.unlinkSync(assPath);
         resolve(outputPath);
       })
       .on('error', (err) => {
-        console.error('FFmpeg error:', err);
+        console.error('❌ FFmpeg error:', err);
+        console.error('Error message:', err.message);
         // Clean up ASS file on error
         if (fs.existsSync(assPath)) {
           fs.unlinkSync(assPath);
