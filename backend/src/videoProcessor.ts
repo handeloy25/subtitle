@@ -33,6 +33,20 @@ function formatAssTime(seconds: number): string {
     .padStart(2, '0')}.${centisecs.toString().padStart(2, '0')}`;
 }
 
+// Helper to format SRT time
+function formatSrtTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const millis = Math.floor((seconds % 1) * 1000);
+
+  return `${hours.toString().padStart(2, '0')}:${minutes
+    .toString()
+    .padStart(2, '0')}:${secs.toString().padStart(2, '0')},${millis
+    .toString()
+    .padStart(3, '0')}`;
+}
+
 export async function burnCaptionsToVideo(
   videoId: string,
   videoPath: string,
@@ -44,54 +58,14 @@ export async function burnCaptionsToVideo(
     throw new Error('No captions found for this video');
   }
 
-  // Create ASS file for FFmpeg (supports better styling)
-  const assPath = path.join(path.dirname(videoPath), `${videoId}.ass`);
+  // Create SRT file (simpler, more compatible than ASS)
+  const srtPath = path.join(path.dirname(videoPath), `${videoId}.srt`);
 
-  // Convert colors to ASS format (&HAABBGGRR format)
-  const hexToAssColor = (hex: string) => {
-    const r = hex.substring(1, 3);
-    const g = hex.substring(3, 5);
-    const b = hex.substring(5, 7);
-    return `&H00${b}${g}${r}`;
-  };
-
-  const primaryColor = hexToAssColor(style.fontColor);
-  // For transparent background, use &HFF000000 (fully transparent black)
-  const bgColor = style.showBackground ? hexToAssColor(style.backgroundColor) : '&HFF000000';
-  const outlineColor = hexToAssColor(style.outlineColor);
-
-  // Determine alignment and margin
-  let alignment = 2; // bottom center
-  let marginV = 30;
-  if (style.position === 'top') {
-    alignment = 8; // top center
-    marginV = 30;
-  } else if (style.position === 'center') {
-    alignment = 5; // middle center
-    marginV = 0;
-  }
-
-  // Create ASS header
-  const assHeader = `[Script Info]
-Title: Generated Subtitles
-ScriptType: v4.00+
-WrapStyle: 0
-PlayResX: 1920
-PlayResY: 1080
-
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,${style.fontFamily},${style.fontSize},${primaryColor},${primaryColor},${outlineColor},${bgColor},${style.fontWeight === 'bold' ? '-1' : '0'},0,0,0,100,${Math.round(style.lineSpacing * 100)},0,0,1,${style.outlineWidth},0,${alignment},10,10,${marginV},1
-
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-`;
-
-  // Add caption events
-  const assEvents = captions
-    .map((caption) => {
-      const startTime = formatAssTime(caption.start_time);
-      const endTime = formatAssTime(caption.end_time);
+  // Generate SRT content (simpler format)
+  const srtContent = captions
+    .map((caption, index) => {
+      const startTime = formatSrtTime(caption.start_time);
+      const endTime = formatSrtTime(caption.end_time);
       let text = caption.text;
 
       // Apply text transform
@@ -101,16 +75,15 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         text = text.toLowerCase();
       }
 
-      return `Dialogue: 0,${startTime},${endTime},Default,,0,0,0,,${text}`;
+      return `${index + 1}\n${startTime} --> ${endTime}\n${text}\n`;
     })
     .join('\n');
 
-  const assContent = assHeader + assEvents;
-  fs.writeFileSync(assPath, assContent, 'utf-8');
-  console.log(`✅ ASS file created at: ${assPath}`);
-  console.log(`📄 ASS file size: ${fs.statSync(assPath).size} bytes`);
+  fs.writeFileSync(srtPath, srtContent, 'utf-8');
+  console.log(`✅ SRT file created at: ${srtPath}`);
+  console.log(`📄 SRT file size: ${fs.statSync(srtPath).size} bytes`);
   console.log(`📝 Total captions: ${captions.length}`);
-  console.log(`📋 First few lines of ASS file:\n${assContent.split('\n').slice(0, 15).join('\n')}`);
+  console.log(`📋 First caption:\n${srtContent.split('\n\n')[0]}`);
 
   // Output path
   const outputPath = path.join(
@@ -119,39 +92,42 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   );
 
   // Normalize path for cross-platform compatibility
-  const normalizedAssPath = assPath.replace(/\\/g, '/');
+  const normalizedSrtPath = srtPath.replace(/\\/g, '/');
   console.log(`🎬 Input video: ${videoPath}`);
-  console.log(`📋 Subtitle file: ${normalizedAssPath}`);
+  console.log(`📋 Subtitle file: ${normalizedSrtPath}`);
   console.log(`💾 Output video: ${outputPath}`);
 
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .outputOptions([
         `-vf`,
-        `subtitles=${normalizedAssPath}:force_style='FontName=${style.fontFamily},FontSize=${style.fontSize},PrimaryColour=${primaryColor},OutlineColour=${outlineColor},Bold=${style.fontWeight === 'bold' ? '-1' : '0'},Outline=${style.outlineWidth},Alignment=${alignment}'`
+        // Use hardcoded style that we KNOW is visible: white text, black outline, bold, bottom position
+        `subtitles=${normalizedSrtPath}:force_style='FontName=Arial,FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=-1,Outline=3,Shadow=1,Alignment=2,MarginV=50'`
       ])
       .videoCodec('libx264')
       .audioCodec('copy')
       .output(outputPath)
       .on('start', (commandLine) => {
-        console.log('FFmpeg command:', commandLine);
+        console.log('🎥 FFmpeg command:', commandLine);
       })
       .on('progress', (progress) => {
-        console.log(`Processing: ${progress.percent}% done`);
+        if (progress.percent) {
+          console.log(`⏳ Processing: ${Math.round(progress.percent)}% done`);
+        }
       })
       .on('end', () => {
         console.log('✅ Video processing finished successfully');
         console.log(`📦 Output file size: ${fs.statSync(outputPath).size} bytes`);
-        // Clean up ASS file
-        fs.unlinkSync(assPath);
+        // Clean up SRT file
+        fs.unlinkSync(srtPath);
         resolve(outputPath);
       })
       .on('error', (err) => {
         console.error('❌ FFmpeg error:', err);
         console.error('Error message:', err.message);
-        // Clean up ASS file on error
-        if (fs.existsSync(assPath)) {
-          fs.unlinkSync(assPath);
+        // Clean up SRT file on error
+        if (fs.existsSync(srtPath)) {
+          fs.unlinkSync(srtPath);
         }
         reject(err);
       })
