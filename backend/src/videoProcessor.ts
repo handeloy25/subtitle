@@ -110,6 +110,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   console.log(`✅ ASS file created at: ${assPath}`);
   console.log(`📄 ASS file size: ${fs.statSync(assPath).size} bytes`);
   console.log(`📝 Total captions: ${captions.length}`);
+  console.log(`📋 First few lines of ASS file:\n${assContent.split('\n').slice(0, 15).join('\n')}`);
 
   // Output path
   const outputPath = path.join(
@@ -127,7 +128,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     ffmpeg(videoPath)
       .outputOptions([
         `-vf`,
-        `subtitles=${normalizedAssPath}`
+        `subtitles=${normalizedAssPath}:force_style='FontName=${style.fontFamily},FontSize=${style.fontSize},PrimaryColour=${primaryColor},OutlineColour=${outlineColor},Bold=${style.fontWeight === 'bold' ? '-1' : '0'},Outline=${style.outlineWidth},Alignment=${alignment}'`
       ])
       .videoCodec('libx264')
       .audioCodec('copy')
