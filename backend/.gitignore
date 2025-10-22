@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Google Cloud credentials
+google-credentials.json
+*.json
+
+# Build output
+dist/
+
+# Database
+database.db
+
+# Uploads
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
