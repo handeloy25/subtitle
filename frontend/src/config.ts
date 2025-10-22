@@ -1,5 +1,4 @@
 // API Configuration
-const isDevelopment = import.meta.env.MODE === 'development';
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
 // Use environment variable if available, otherwise auto-detect

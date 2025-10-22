@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Caption, CaptionStyle } from '../types';
+import type { Caption, CaptionStyle } from '../types';
 
 interface VideoPreviewProps {
   videoUrl: string;

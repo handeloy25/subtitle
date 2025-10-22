@@ -1,4 +1,4 @@
-import { Caption, CaptionStyle } from '../types';
+import type { Caption, CaptionStyle } from '../types';
 import { Download, Edit3 } from 'lucide-react';
 
 interface CaptionEditorProps {

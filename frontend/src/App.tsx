@@ -224,7 +224,7 @@ function App() {
     if (!editingCaptionId || !editingText.trim()) return;
 
     try {
-      const response = await axios.put(
+      await axios.put(
         `${API_URL}/api/captions/${editingCaptionId}`,
         { text: editingText }
       );
