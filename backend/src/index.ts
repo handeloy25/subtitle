@@ -24,6 +24,9 @@ if (process.env.NODE_ENV === 'production' && process.env.GOOGLE_CREDENTIALS_BASE
 const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const BACKEND_URL = process.env.RAILWAY_PUBLIC_DOMAIN
+  ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+  : `http://localhost:${PORT}`;
 
 // Middleware
 app.use(cors({
@@ -101,7 +104,7 @@ app.post('/api/upload', upload.single('video'), (req: Request, res: Response) =>
     });
 
     // Generate video URL
-    const videoUrl = `http://localhost:${PORT}/uploads/${path.basename(filepath)}`;
+    const videoUrl = `${BACKEND_URL}/uploads/${path.basename(filepath)}`;
 
     res.json({
       videoId: video.id,
@@ -181,7 +184,7 @@ app.get('/api/video/:videoId', (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Video not found' });
     }
 
-    const videoUrl = `http://localhost:${PORT}/uploads/${path.basename(video.filepath)}`;
+    const videoUrl = `${BACKEND_URL}/uploads/${path.basename(video.filepath)}`;
 
     res.json({
       id: video.id,
@@ -245,7 +248,7 @@ app.post('/api/export/:videoId', async (req: Request, res: Response) => {
     const outputPath = await burnCaptionsToVideo(videoId, video.filepath, style);
 
     const outputFilename = path.basename(outputPath);
-    const downloadUrl = `http://localhost:${PORT}/uploads/${outputFilename}`;
+    const downloadUrl = `${BACKEND_URL}/uploads/${outputFilename}`;
 
     res.json({
       message: 'Video exported successfully',
