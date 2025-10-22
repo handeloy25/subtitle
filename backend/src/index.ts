@@ -265,8 +265,10 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n🚀 Server is running on http://0.0.0.0:${PORT}`);
+const HOST = '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`\n🚀 Server is running on http://${HOST}:${PORT}`);
   console.log(`📁 Upload directory: ${uploadsDir}`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV}`);
   console.log(`\n✨ Video Caption Generator API is ready!\n`);
 });
