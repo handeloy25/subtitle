@@ -114,14 +114,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     `${videoId}_with_captions.mp4`
   );
 
-  // Escape path for Windows
-  const escapedAssPath = assPath.replace(/\\/g, '/').replace(/:/g, '\\:');
+  // Normalize path for cross-platform compatibility
+  const normalizedAssPath = assPath.replace(/\\/g, '/');
 
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .outputOptions([
         `-vf`,
-        `ass='${escapedAssPath}'`
+        `subtitles=${normalizedAssPath}`
       ])
       .videoCodec('libx264')
       .audioCodec('copy')
