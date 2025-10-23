@@ -97,15 +97,13 @@ export async function burnCaptionsToVideo(
   console.log(`📋 Subtitle file: ${normalizedSrtPath}`);
   console.log(`💾 Output video: ${outputPath}`);
 
-  // Set font path explicitly - try multiple common font locations
-  const fontPaths = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-    '/nix/store/*/share/fonts/truetype/DejaVuSans.ttf',
-    'DejaVu Sans'
-  ];
+  // Use bundled font file
+  const fontPath = path.join(__dirname, '../fonts/DejaVuSans-Bold.ttf');
+  const fontExists = fs.existsSync(fontPath);
+  console.log(`🔤 Font file exists: ${fontExists}, path: ${fontPath}`);
 
-  // Build subtitle filter with explicit font
-  const subtitleFilter = `subtitles=${normalizedSrtPath}:force_style='FontName=DejaVu Sans,FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Bold=-1,Outline=3'`;
+  // Build subtitle filter with explicit font path
+  const subtitleFilter = `subtitles=${normalizedSrtPath}:fontsdir=${path.dirname(fontPath)}:force_style='FontName=DejaVuSans-Bold,FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Bold=-1,Outline=3'`;
 
   console.log(`🎨 Using subtitle filter: ${subtitleFilter}`);
 
