@@ -97,7 +97,7 @@ app.get('/api/ffmpeg-info', (req: Request, res: Response) => {
       hasSubtitlesFilter: ffmpegFilters.includes('subtitles'),
       hasDrawtextFilter: ffmpegFilters.includes('drawtext'),
       hasAssFilter: ffmpegFilters.includes(' ass '),
-      configuration: ffmpegVersion.split('\n').find(l => l.includes('configuration:'))
+      configuration: ffmpegVersion.split('\n').find((l: string) => l.includes('configuration:'))
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message, stack: error.stack });
