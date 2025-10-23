@@ -97,14 +97,23 @@ export async function burnCaptionsToVideo(
   console.log(`📋 Subtitle file: ${normalizedSrtPath}`);
   console.log(`💾 Output video: ${outputPath}`);
 
-  // Simplify: Just use the subtitle filter without force_style - let it use defaults
-  console.log(`🎨 Using simple subtitles filter with SRT file`);
+  // Set font path explicitly - try multiple common font locations
+  const fontPaths = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/nix/store/*/share/fonts/truetype/DejaVuSans.ttf',
+    'DejaVu Sans'
+  ];
+
+  // Build subtitle filter with explicit font
+  const subtitleFilter = `subtitles=${normalizedSrtPath}:force_style='FontName=DejaVu Sans,FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Bold=-1,Outline=3'`;
+
+  console.log(`🎨 Using subtitle filter: ${subtitleFilter}`);
 
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .outputOptions([
         `-vf`,
-        `subtitles=${normalizedSrtPath}`
+        subtitleFilter
       ])
       .videoCodec('libx264')
       .audioCodec('copy')
