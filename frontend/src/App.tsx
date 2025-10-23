@@ -174,19 +174,32 @@ function App() {
       const response = await axios.post(
         `${API_URL}/api/export/${videoId}`,
         { style: captionStyle },
-        { timeout: 300000 } // 5 minute timeout
+        { timeout: 60000 } // 1 minute timeout
       );
 
-      // Download the exported video
-      const link = document.createElement('a');
-      link.href = response.data.downloadUrl;
-      link.download = response.data.filename;
-      link.click();
+      // Download the SRT subtitle file
+      const srtLink = document.createElement('a');
+      srtLink.href = response.data.srtUrl;
+      srtLink.download = response.data.srtFilename;
+      document.body.appendChild(srtLink);
+      srtLink.click();
+      document.body.removeChild(srtLink);
 
-      alert('Video exported successfully!');
+      // Small delay between downloads
+      setTimeout(() => {
+        // Download the original video
+        const videoLink = document.createElement('a');
+        videoLink.href = response.data.videoUrl;
+        videoLink.download = response.data.videoFilename;
+        document.body.appendChild(videoLink);
+        videoLink.click();
+        document.body.removeChild(videoLink);
+      }, 500);
+
+      alert('✅ Subtitles and video exported successfully!\n\nYou can use the SRT file with any video player or editor.');
     } catch (error) {
       console.error('Export error:', error);
-      alert('Failed to export video. Please try again.');
+      alert('Failed to export subtitles. Please try again.');
     } finally {
       setIsExporting(false);
     }
