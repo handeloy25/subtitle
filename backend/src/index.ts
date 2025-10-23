@@ -82,6 +82,24 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// FFmpeg info endpoint
+app.get('/api/ffmpeg-info', (req: Request, res: Response) => {
+  const { execSync } = require('child_process');
+  try {
+    const ffmpegVersion = execSync('ffmpeg -version').toString();
+    const ffmpegFilters = execSync('ffmpeg -filters').toString();
+
+    res.json({
+      version: ffmpegVersion.split('\n').slice(0, 5).join('\n'),
+      hasSubtitlesFilter: ffmpegFilters.includes('subtitles'),
+      hasDrawtextFilter: ffmpegFilters.includes('drawtext'),
+      hasLibass: ffmpegVersion.includes('--enable-libass')
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Upload video endpoint
 app.post('/api/upload', upload.single('video'), (req: Request, res: Response) => {
   try {
