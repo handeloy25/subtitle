@@ -97,13 +97,18 @@ export async function burnCaptionsToVideo(
   console.log(`📋 Subtitle file: ${normalizedSrtPath}`);
   console.log(`💾 Output video: ${outputPath}`);
 
-  // Use bundled font file
-  const fontPath = path.join(__dirname, '../fonts/DejaVuSans-Bold.ttf');
+  // Use bundled font file - try absolute path first, then relative
+  let fontPath = path.join(__dirname, '../fonts/DejaVuSans-Bold.ttf');
+  if (!fs.existsSync(fontPath)) {
+    // Try from dist directory
+    fontPath = path.join(__dirname, '../../fonts/DejaVuSans-Bold.ttf');
+  }
   const fontExists = fs.existsSync(fontPath);
   console.log(`🔤 Font file exists: ${fontExists}, path: ${fontPath}`);
+  console.log(`🔤 __dirname: ${__dirname}`);
 
-  // Build subtitle filter with explicit font path
-  const subtitleFilter = `subtitles=${normalizedSrtPath}:fontsdir=${path.dirname(fontPath)}:force_style='FontName=DejaVuSans-Bold,FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Bold=-1,Outline=3'`;
+  // Simplify - just use subtitles filter without fontsdir for now
+  const subtitleFilter = `subtitles=${normalizedSrtPath}:force_style='FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,Bold=-1,Outline=3'`;
 
   console.log(`🎨 Using subtitle filter: ${subtitleFilter}`);
 
