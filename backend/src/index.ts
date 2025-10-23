@@ -85,18 +85,22 @@ app.get('/api/health', (req: Request, res: Response) => {
 // FFmpeg info endpoint
 app.get('/api/ffmpeg-info', (req: Request, res: Response) => {
   const { execSync } = require('child_process');
+  const { path: ffmpegPath } = require('@ffmpeg-installer/ffmpeg');
+
   try {
-    const ffmpegVersion = execSync('ffmpeg -version').toString();
-    const ffmpegFilters = execSync('ffmpeg -filters').toString();
+    const ffmpegVersion = execSync(`${ffmpegPath} -version`).toString();
+    const ffmpegFilters = execSync(`${ffmpegPath} -filters`).toString();
 
     res.json({
-      version: ffmpegVersion.split('\n').slice(0, 5).join('\n'),
+      ffmpegPath,
+      version: ffmpegVersion.split('\n').slice(0, 10).join('\n'),
       hasSubtitlesFilter: ffmpegFilters.includes('subtitles'),
       hasDrawtextFilter: ffmpegFilters.includes('drawtext'),
-      hasLibass: ffmpegVersion.includes('--enable-libass')
+      hasAssFilter: ffmpegFilters.includes(' ass '),
+      configuration: ffmpegVersion.split('\n').find(l => l.includes('configuration:'))
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
