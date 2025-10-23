@@ -111,6 +111,10 @@ export async function burnCaptionsToVideo(
       .output(outputPath)
       .on('start', (commandLine) => {
         console.log('🎥 FFmpeg command:', commandLine);
+        console.log(`📂 SRT file exists: ${fs.existsSync(srtPath)}`);
+      })
+      .on('stderr', (stderrLine) => {
+        console.log('FFmpeg stderr:', stderrLine);
       })
       .on('progress', (progress) => {
         if (progress.percent) {
@@ -119,9 +123,14 @@ export async function burnCaptionsToVideo(
       })
       .on('end', () => {
         console.log('✅ Video processing finished successfully');
-        console.log(`📦 Output file size: ${fs.statSync(outputPath).size} bytes`);
-        // Clean up SRT file
-        fs.unlinkSync(srtPath);
+        const outputExists = fs.existsSync(outputPath);
+        const outputSize = outputExists ? fs.statSync(outputPath).size : 0;
+        console.log(`📦 Output file exists: ${outputExists}, size: ${outputSize} bytes`);
+
+        // Keep SRT file for debugging - DON'T delete it yet
+        // fs.unlinkSync(srtPath);
+        console.log(`🔍 SRT file kept at: ${srtPath} for debugging`);
+
         resolve(outputPath);
       })
       .on('error', (err) => {
