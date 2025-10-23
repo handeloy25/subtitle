@@ -264,31 +264,35 @@ app.put('/api/captions/:captionId', (req: Request, res: Response) => {
   }
 });
 
-// Export video with burned captions endpoint
+// Export subtitles as SRT file
 app.post('/api/export/:videoId', async (req: Request, res: Response) => {
   try {
     const { videoId } = req.params;
-    const style: VideoCaptionStyle = req.body.style;
+    const { generateSrtFile } = require('./exportSubtitles');
 
     const video = getVideo(videoId);
     if (!video) {
       return res.status(404).json({ error: 'Video not found' });
     }
 
-    console.log('Starting video export with burned captions...');
-    const outputPath = await burnCaptionsToVideo(videoId, video.filepath, style);
+    console.log('Generating SRT subtitle file...');
+    const style = req.body.style || {};
+    const srtPath = generateSrtFile(videoId, style.textTransform || 'none');
 
-    const outputFilename = path.basename(outputPath);
-    const downloadUrl = `${BACKEND_URL}/uploads/${outputFilename}`;
+    const srtFilename = path.basename(srtPath);
+    const srtUrl = `${BACKEND_URL}/uploads/${srtFilename}`;
+    const videoUrl = `${BACKEND_URL}/uploads/${path.basename(video.filepath)}`;
 
     res.json({
-      message: 'Video exported successfully',
-      downloadUrl,
-      filename: outputFilename,
+      message: 'Subtitles exported successfully',
+      srtUrl,
+      videoUrl,
+      srtFilename,
+      videoFilename: path.basename(video.filepath),
     });
   } catch (error) {
-    console.error('Export video error:', error);
-    res.status(500).json({ error: 'Failed to export video' });
+    console.error('Export subtitles error:', error);
+    res.status(500).json({ error: 'Failed to export subtitles' });
   }
 });
 
