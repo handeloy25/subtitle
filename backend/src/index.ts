@@ -91,13 +91,22 @@ app.get('/api/ffmpeg-info', (req: Request, res: Response) => {
     const ffmpegVersion = execSync(`${ffmpegPath} -version`).toString();
     const ffmpegFilters = execSync(`${ffmpegPath} -filters`).toString();
 
+    // Check for font files
+    let fontFiles = 'Not found';
+    try {
+      fontFiles = execSync('find /nix /usr -name "*.ttf" 2>/dev/null | head -10').toString();
+    } catch (e) {
+      // ignore
+    }
+
     res.json({
       ffmpegPath,
       version: ffmpegVersion.split('\n').slice(0, 10).join('\n'),
       hasSubtitlesFilter: ffmpegFilters.includes('subtitles'),
       hasDrawtextFilter: ffmpegFilters.includes('drawtext'),
       hasAssFilter: ffmpegFilters.includes(' ass '),
-      configuration: ffmpegVersion.split('\n').find((l: string) => l.includes('configuration:'))
+      configuration: ffmpegVersion.split('\n').find((l: string) => l.includes('configuration:')),
+      fontFiles
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message, stack: error.stack });
