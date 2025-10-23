@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_22", "python311", "ffmpeg"]
+nixPkgs = ["nodejs_22", "python311", "ffmpeg", "fontconfig", "dejavu_fonts"]
 
 [phases.install]
 cmds = [
