@@ -97,12 +97,36 @@ export async function burnCaptionsToVideo(
   console.log(`📋 Subtitle file: ${normalizedSrtPath}`);
   console.log(`💾 Output video: ${outputPath}`);
 
+  // Build drawtext filter chain - this draws text directly without subtitle files
+  const drawtextFilters = captions.map((caption) => {
+    let text = caption.text.replace(/'/g, "'\\\\\\''"); // Escape single quotes
+
+    // Apply text transform
+    if (style.textTransform === 'uppercase') {
+      text = text.toUpperCase();
+    } else if (style.textTransform === 'lowercase') {
+      text = text.toLowerCase();
+    }
+
+    // Determine vertical position
+    let y = 'h-th-50'; // bottom
+    if (style.position === 'top') {
+      y = '50';
+    } else if (style.position === 'center') {
+      y = '(h-th)/2';
+    }
+
+    return `drawtext=text='${text}':fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:fontsize=48:fontcolor=white:borderw=3:bordercolor=black:x=(w-text_w)/2:y=${y}:enable='between(t,${caption.start_time},${caption.end_time})'`;
+  }).join(',');
+
+  console.log(`🎨 Using drawtext filter with ${captions.length} text overlays`);
+  console.log(`📝 Sample filter: ${drawtextFilters.split(',')[0]}`);
+
   return new Promise((resolve, reject) => {
     ffmpeg(videoPath)
       .outputOptions([
         `-vf`,
-        // Use hardcoded style that we KNOW is visible: white text, black outline, bold, bottom position
-        `subtitles=${normalizedSrtPath}:force_style='FontName=Arial,FontSize=48,PrimaryColour=&H00FFFFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=-1,Outline=3,Shadow=1,Alignment=2,MarginV=50'`
+        drawtextFilters
       ])
       .videoCodec('libx264')
       .audioCodec('copy')
@@ -125,6 +149,7 @@ export async function burnCaptionsToVideo(
       .on('error', (err) => {
         console.error('❌ FFmpeg error:', err);
         console.error('Error message:', err.message);
+        console.error('Full error:', JSON.stringify(err, null, 2));
         // Clean up SRT file on error
         if (fs.existsSync(srtPath)) {
           fs.unlinkSync(srtPath);
